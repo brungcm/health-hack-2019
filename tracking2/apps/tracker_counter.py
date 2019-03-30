@@ -35,9 +35,9 @@ POOL_BORDER_W = int(FRAME_SIZE[1]*0.3)
 
 POOL_MASK = np.zeros(FRAME_SIZE)
 
-POOL_MASK[:,:POOL_BORDER_W,0] = 125 # BLUE
-POOL_MASK[:,:POOL_BORDER_W,1] = 242 # GREEN
-POOL_MASK[:,:POOL_BORDER_W,2] = 145 # RED
+POOL_MASK[:,:POOL_BORDER_W,0] = 212 # BLUE
+POOL_MASK[:,:POOL_BORDER_W,1] = 255 # GREEN
+POOL_MASK[:,:POOL_BORDER_W,2] = 127 # RED
 
 POOL_MASK[:,POOL_BORDER_W:2*POOL_BORDER_W,0] = 96 # BLUE
 POOL_MASK[:,POOL_BORDER_W:2*POOL_BORDER_W,1] = 247 # GREEN
@@ -125,24 +125,7 @@ class CameraApp:
             frame = cv2.resize(frame,(FRAME_SIZE[1],FRAME_SIZE[0]))
             
             objs = self.object_estimator.process(frame)
-            
-            # obj_count_queue.append(len(objs))
-            # time_end = datetime.now()
-
-            # if ((time_end - time_start).total_seconds() > window_size_secs):
-
-            #     mean_objects = np.ceil(np.mean(obj_count_queue))
-            #     first_quantile, second_quantile, third_quantile = np.percentile(
-            #         obj_count_queue, [25, 50, 75])
-
-            #     logger.info('Objects from {} - {}  =  mean: {}, min: {}, median: {}, max: {}'.format(
-            #         time_start, time_end, mean_objects, first_quantile, second_quantile, third_quantile))
-
-            #     del obj_count_queue  # Python 2 hasn't clear method.
-            #     obj_count_queue = list()                
-                
-            #     time_start = time_end
-
+                        
             frame = self._draw_bbox(
                 frame, [obj.bbox for obj in self.object_estimator.objects])
 

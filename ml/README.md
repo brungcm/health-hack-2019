@@ -42,3 +42,14 @@ python -m ml.generate_tfrecords \
 --window-size 16 \
 --window-offset 8
 ```
+
+
+## Train network
+
+```bash
+python train_net.py \
+--train-tf-list /dataset/tfrecords/train_normal.tfrecord.gz,/dataset/tfrecords/train_drowning.tfrecord.gz \
+--test-tf-list /dataset/tfrecords/test_normal.tfrecord.gz,/dataset/tfrecords/test_drowning.tfrecord.gz \
+--output-dir /models/ \
+--window-size 16
+```

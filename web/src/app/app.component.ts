@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-
+import { interval } from 'rxjs';
+import { switchMap } from 'rxjs/operators';
 
 @Component({
   selector: 'app-root',
@@ -8,19 +9,56 @@ import { HttpClient } from '@angular/common/http';
   styleUrls: ['./app.component.css']
 })
 export class AppComponent {
-  title = 'app';
-  allData: JSON;
+    baseUrl = 'http://localhost:5002/';
+    totalRisk = 0;
+    chartDatas: any[] = [
+        {
+            gaugeType: 'semi',
+            gaugeValue: 0,
+            gaugeLabel: 'Position'
+        },
+        {
+            gaugeType: 'semi',
+            gaugeValue: 0,
+            gaugeLabel: 'Submerged Face'
+        },
+        {
+            gaugeType: 'semi',
+            gaugeValue: 0,
+            gaugeLabel: 'Panic'
+        }
+    ];
 
-  constructor(private httpClient: HttpClient) {
-  }
+    thresholdConfig = {
+        0: { color: '#7fffd4' },
+        30: { color: '#FF8C00' },
+        70: { color: '#ed0215' }
+    };
 
-  ngOnInit() {
-  }
+    constructor(private httpClient: HttpClient) {
+    }
 
-  findAll() {
-    this.httpClient.get('http://127.0.0.1:5002/').subscribe(data => {
-      this.allData = data as JSON;
-      console.log(this.allData);
-    })
-  }
+    public ngOnInit() {
+        this.requestForever();
+    }
+
+    private requestForever() {
+        const result = interval(3000).pipe(
+            switchMap(() => this.httpClient.get(this.baseUrl))
+        );
+
+        result.subscribe(
+            (data: any) => {
+                this.chartDatas[0].gaugeValue = data.riskPosition;
+                this.chartDatas[1].gaugeValue = data.submergedFaceSeconds;
+                this.chartDatas[2].gaugeValue = data.riskPanic;
+
+                this.totalRisk = Math.floor((data.riskPosition + data.submergedFaceSeconds + data.riskPanic) / 3);
+            },
+            (error: Error) => {
+                console.error(error);
+            }
+        );
+    }
+
 }

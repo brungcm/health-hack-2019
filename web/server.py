@@ -4,6 +4,7 @@ from flask_restful import Resource, Api
 from json import dumps
 from flask_jsonpify import jsonify
 import threading
+from random import randint
 
 app = Flask(__name__)
 api = Api(app)
@@ -14,7 +15,10 @@ globvar = 0
 
 @app.route("/")
 def get():
-    return jsonify({'employees': [{'id':globvar, 'name':'Balram'},{'id':2, 'name':'Tom'}]})
+    positionRandom = randint(0, 100)
+    submergedRandom = randint(0, 100)
+    panicRandom = randint(0, 100)
+    return jsonify({ 'riskPosition': positionRandom, 'submergedFaceSeconds': submergedRandom, 'riskPanic': panicRandom })
 
 # class Employees(Resource):
 #     def get(self):

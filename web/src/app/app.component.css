@@ -1,0 +1,47 @@
+body {
+    font-family: monospace;
+}
+
+.charts-container, .total-risk-container {
+    text-align: center;
+    margin-top: 30px;
+}
+
+ngx-gauge {
+    margin: 15px;
+}
+
+.total-risk-container {
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    margin: 30px auto;
+    background-color: black;
+}
+
+.total-risk-container .content {
+    color: white;
+    position: relative;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.total-risk-container.low {
+    background-color: #36d39f;
+}
+
+.total-risk-container.medium {
+    background-color: #FF8C00;
+}
+
+.total-risk-container.high {
+    background-color: #ed0215;
+}
+
+.total-risk-container .content p {
+    margin: auto;
+}
+
+.total-risk-container .content .value {
+    font-size: 3em;
+}

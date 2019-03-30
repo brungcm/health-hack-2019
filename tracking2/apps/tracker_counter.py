@@ -113,11 +113,9 @@ class CameraApp:
         """
 
         obj_count_queue = list()
-        time_start = datetime.now()
+        # time_start = datetime.now()
 
-        self.video_stream.initialize()
-
-        dead_objects = []
+        self.video_stream.initialize()        
 
         while True:
 
@@ -128,22 +126,22 @@ class CameraApp:
             
             objs = self.object_estimator.process(frame)
             
-            obj_count_queue.append(len(objs))
-            time_end = datetime.now()
+            # obj_count_queue.append(len(objs))
+            # time_end = datetime.now()
 
-            if ((time_end - time_start).total_seconds() > window_size_secs):
+            # if ((time_end - time_start).total_seconds() > window_size_secs):
 
-                mean_objects = np.ceil(np.mean(obj_count_queue))
-                first_quantile, second_quantile, third_quantile = np.percentile(
-                    obj_count_queue, [25, 50, 75])
+            #     mean_objects = np.ceil(np.mean(obj_count_queue))
+            #     first_quantile, second_quantile, third_quantile = np.percentile(
+            #         obj_count_queue, [25, 50, 75])
 
-                logger.info('Objects from {} - {}  =  mean: {}, min: {}, median: {}, max: {}'.format(
-                    time_start, time_end, mean_objects, first_quantile, second_quantile, third_quantile))
+            #     logger.info('Objects from {} - {}  =  mean: {}, min: {}, median: {}, max: {}'.format(
+            #         time_start, time_end, mean_objects, first_quantile, second_quantile, third_quantile))
 
-                del obj_count_queue  # Python 2 hasn't clear method.
-                obj_count_queue = list()                
+            #     del obj_count_queue  # Python 2 hasn't clear method.
+            #     obj_count_queue = list()                
                 
-                time_start = time_end
+            #     time_start = time_end
 
             frame = self._draw_bbox(
                 frame, [obj.bbox for obj in self.object_estimator.objects])
@@ -175,19 +173,7 @@ if __name__ == '__main__':
     threshold = float(config['object_detection']['threshold'])
     detection_rate = int(config['object_detection']['detection_rate'])
     id2name = {int(k): v for k,
-               v in config['object_detection']['id2name'].items()}
-
-    # try:
-    #     bq_dataset_name = config['bq']['counter']['dataset_name']
-    #     bq_table_name = config['bq']['counter']['table_name']
-    #     bq_writer = BigQueryConn(bq_dataset_name, bq_table_name)
-
-    #     bq_timer_dataset_name = config['bq']['timer']['dataset_name']
-    #     bq_timer_table_name = config['bq']['timer']['table_name']
-    #     bq_timer_writer = BigQueryConn(bq_timer_dataset_name, bq_timer_table_name)
-    # except KeyError as err:
-    #     bq_writer = None
-    #     bq_timer_writer = None
+               v in config['object_detection']['id2name'].items()}    
 
     window_size_secs = config['window_size_secs']
 
@@ -195,33 +181,16 @@ if __name__ == '__main__':
         camera_id = int(config['video_stream']['camera_id'])
     except ValueError as err:
         camera_id = config['video_stream']['camera_id']
-
-    # try:
-    #     pubsub_topic = config['pubsub']['topic']
-    #     pubsub_project_id = config['pubsub']['project_id']
-    #     pubsub_publisher = pubsub_v1.PublisherClient()
-    #     topic_path = pubsub_publisher.topic_path(
-    #         pubsub_project_id, pubsub_topic)
-    # except KeyError as err:
-    #     topic_path = None
-    #     pubsub_publisher = None
+    
 
     audit_writer = None
     display = True
 
     detector = detector.Detector(
         model_path=model_path, id2name=id2name, threshold=threshold)
-    tracker = tracker.OpenCV_Tracker(
-        detector=detector, detection_rate=detection_rate, object_life_cycle=object_life_cycle, tracker_name='kcf')
-        #detector=detector, detection_rate=detection_rate, object_life_cycle=object_life_cycle, tracker_name='csrt')
-        #detector=detector, detection_rate=detection_rate, object_life_cycle=object_life_cycle, tracker_name='medianflow')
-
-    # tracker = tracker.DLIB_Tracker(
-    #     detector=detector, detection_rate=detection_rate, object_life_cycle=object_life_cycle)
 
     opencv_stream = OpenCVStream(camera_id)
 
     app = CameraApp(video_stream=opencv_stream,
-                    # object_estimator=tracker)
                     object_estimator=detector)
     app.run(display=display)

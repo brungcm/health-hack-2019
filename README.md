@@ -49,7 +49,7 @@ export XSOCK=/tmp/.X11-unix \
 export XAUTH=/tmp/.docker.xauth \
 xauth nlist $DISPLAY | sed -e 's/^..../ffff/' | xauth -f $XAUTH nmerge -
 
-docker run --runtime=nvidia -it --rm --device=/dev/video0:/dev/video0 --privileged -v ${PWD}:/tracker -v /tmp/.X11-unix:/tmp/.X11-unix --env QT_X11_NO_MITSHM=1 -v ${PWD}:/tracker  --device=/dev/video0 -e DISPLAY=$DISPLAY -v $XSOCK:$XSOCK -v $XAUTH:$XAUTH -e XAUTHORITY=$XAUTH tf_1_13_opencv_3.4 
+docker run --runtime=nvidia -it --rm --device=/dev/video0:/dev/video0 --privileged -v ${PWD}:/tracker -v /tmp/.X11-unix:/tmp/.X11-unix -v /home/CIT/rodrigofp/Projects/hackathon/dataset:/dataset --env QT_X11_NO_MITSHM=1 -v ${PWD}:/tracker  --device=/dev/video0 -e DISPLAY=$DISPLAY -v $XSOCK:$XSOCK -v $XAUTH:$XAUTH -e XAUTHORITY=$XAUTH tf_1_13_opencv_3.4 
 
 xhost -local:docker
 

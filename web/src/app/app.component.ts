@@ -15,7 +15,7 @@ interface IRiskData {
   styleUrls: ['./app.component.css']
 })
 export class AppComponent {
-    baseUrl = 'http://localhost:5002/';
+    baseUrl = 'http://localhost:5000/status';
     chartDatas: any[] = [
         {
             gaugeType: 'semi',

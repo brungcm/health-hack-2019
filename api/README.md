@@ -1,4 +1,4 @@
-# Tracker app API
+# Tracker App API
 
 ### Build docker image
 ```bash

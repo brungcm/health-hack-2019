@@ -15,7 +15,7 @@ logging.basicConfig()
 logger = logging.getLogger('People-Tracker-App')
 logger.setLevel(logging.INFO)
 
-FRAME_SIZE = (600, 800, 3)
+FRAME_SIZE = (480, 640, 3)
 RESIZE_RATE = 3
 
 POOL_MASK = np.zeros(FRAME_SIZE)
@@ -63,7 +63,8 @@ class CameraApp:
             frame = cv2.resize(frame, (FRAME_SIZE[1], FRAME_SIZE[0]))
             frame_buffer.append(frame)
             self.object_estimator.process(frame)
-            panic_score = self.movement_classifier.process(frame_buffer)
+            # panic_score = self.movement_classifier.process(frame_buffer)
+            panic_score = 0
             self.update_status(panic_score)
             frame = self._draw_bbox(frame, [obj.bbox for obj in self.object_estimator.objects])
             self.write_label(frame)
@@ -112,11 +113,12 @@ class CameraApp:
         return obj_sector
 
     def write_label(self, frame):
-        if self.status.get('subject', None) and self.status.get('cx', '') and self.status.get('sector', ''):
+        if self.status.get('subject', None) and self.status.get('cx', '') and self.status.get('riskPosition', ''):
             xmin_label = 'xmin: {}'.format(self.status.get('subject').get('xmin'))
             xmax_label = 'xmax: {}'.format(self.status.get('subject').get('xmax'))
             cx_label = 'cx: {}'.format(self.status.get('cx', ''))
-            sector_label = 'sector: {}'.format(self.status.get('sector', ''))
+            sector_label = 'sector: {}'.format(self.status.get('riskPosition', ''))
+            panic_label = 'panic level: {}'.format(self.status.get('riskPanic', ''))
             cv2.putText(frame, xmin_label, (20, 20), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255, 255, 255),
                         lineType=cv2.LINE_AA)
             cv2.putText(frame, xmax_label, (20, 35), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255, 255, 255),
@@ -124,6 +126,8 @@ class CameraApp:
             cv2.putText(frame, cx_label, (20, 50), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255, 255, 255),
                         lineType=cv2.LINE_AA)
             cv2.putText(frame, sector_label, (20, 65), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255, 255, 255),
+                        lineType=cv2.LINE_AA)
+            cv2.putText(frame, panic_label, (20, 80), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255, 255, 255),
                         lineType=cv2.LINE_AA)
 
     def write_status_to_file(self):

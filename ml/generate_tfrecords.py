@@ -24,8 +24,7 @@ TARGET_DICT = {
     'drowning': 1
 }
 
-IMAGE_SIZE = (300, 300)
-
+# TODO: Fazer resize antes de salvar
 
 def bytes_feature(value):
     return tf.train.Feature(bytes_list=tf.train.BytesList(value=value))

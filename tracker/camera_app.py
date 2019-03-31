@@ -6,6 +6,7 @@ import numpy as np
 import os
 import time
 
+from collections import deque
 from engine.detector import Detector
 from stream.opencv_stream import OpenCVStream
 
@@ -49,12 +50,15 @@ class CameraApp:
         """
 
         self.video_stream.initialize()
+        frame_buffer = deque(maxlen=config.FRAME_BUFFER_SIZE)
+
         while True:
             frame = self.video_stream.next_frame()
             if frame is None:
                 break
             frame = cv2.flip(frame, 1)
             frame = cv2.resize(frame, (FRAME_SIZE[1], FRAME_SIZE[0]))
+            frame_buffer.append(frame)
             self.object_estimator.process(frame)
             self.update_status()
             frame = self._draw_bbox(frame, [obj.bbox for obj in self.object_estimator.objects])

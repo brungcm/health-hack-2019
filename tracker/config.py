@@ -9,3 +9,4 @@ MODEL_PATH = os.getenv('MODEL_PATH', 'model/ssd_mobilenet_v1_coco_2018_01_28/sav
 OBJECT_LIFECYCLE = os.getenv('OBJECT_LIFECYCLE', 3)
 TRACKER_NAME = os.getenv('TRACKER_NAME', 'kcf')
 WINDOW_SIZE_SECS = os.getenv('WINDOW_SIZE_SECS', 60)
+FRAME_BUFFER_SIZE = os.getenv('FRAME_BUFFER_SIZE', 16)

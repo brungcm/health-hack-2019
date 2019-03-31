@@ -5,11 +5,13 @@ import logging
 import os
 
 from flask import Flask, jsonify
+from flask_cors import CORS
 
 logger = logging.getLogger(__name__)
 logging.getLogger().setLevel(logging.INFO)
 
 app = Flask(__name__)
+CORS(app)
 
 
 @app.route('/')
@@ -19,7 +21,7 @@ def default():
 
 @app.route('/status')
 def get_status():
-    filepath = os.environ['STATUS_FILE']
+    filepath = os.getenv('STATUS_FILE', '../status.json')
     with open(filepath, 'r') as status_file:
         status_data = json.load(status_file)
     return jsonify(status_data)

@@ -9,13 +9,15 @@ import time
 from collections import deque
 from engine.classifier import MovementClassifier
 from engine.detector import Detector
+from engine.face_detector import FaceDetector
 from stream.opencv_stream import OpenCVStream
 
 logging.basicConfig()
 logger = logging.getLogger('People-Tracker-App')
 logger.setLevel(logging.INFO)
 
-FRAME_SIZE = (480, 640, 3)
+FRAME_SIZE = (600, 800, 3)
+FRAME_AREA = FRAME_SIZE[0] * FRAME_SIZE[1]
 RESIZE_RATE = 3
 
 POOL_MASK = np.zeros(FRAME_SIZE)
@@ -38,11 +40,13 @@ class CameraApp:
     """ App
     """
 
-    def __init__(self, video_stream, object_estimator, movement_classifier):
+    def __init__(self, video_stream, object_estimator, movement_classifier, face_detector):
         self.video_stream = video_stream
         self.object_estimator = object_estimator
         self.movement_classifier = movement_classifier
+        self.face_detector = face_detector
         self.status = {}
+        self.bbox_area_queue = deque(maxlen=10)
 
     def run(self):
         """ Run App
@@ -62,11 +66,13 @@ class CameraApp:
             frame = cv2.flip(frame, 1)
             frame = cv2.resize(frame, (FRAME_SIZE[1], FRAME_SIZE[0]))
             frame_buffer.append(frame)
+            # Check main subject position
             self.object_estimator.process(frame)
-            # panic_score = self.movement_classifier.process(frame_buffer)
-            panic_score = 0
-            self.update_status(panic_score)
-            frame = self._draw_bbox(frame, [obj.bbox for obj in self.object_estimator.objects])
+            # detect face
+            frame, secs = self.face_detector.process(frame)
+            self.update_status(secs)
+            frame = self._draw_bbox(
+                frame, [obj.bbox for obj in self.object_estimator.objects])
             self.write_label(frame)
             if config.DISPLAY:
                 frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
@@ -76,11 +82,12 @@ class CameraApp:
                     break
         cv2.destroyAllWindows()
 
-    def update_status(self, panic_score):
-        main_obj, cnt = self.get_main_bbox()
+    def update_status(self, time_active):
+        main_obj, cnt, main_obj_area = self.get_main_bbox()
         if main_obj:
-            self.status['riskPanic'] = panic_score
             self.get_main_object_sector(main_obj)
+            self.get_panic_score(main_obj_area)
+            self.status['faceWaterSeconds'] = time_active
             self.write_status_to_file()
 
     def get_main_bbox(self):
@@ -103,7 +110,7 @@ class CameraApp:
                 'ymin': main_object.bbox[1],
                 'ymax': main_object.bbox[3]
             }
-        return main_object, contour
+        return main_object, contour, cur_area
 
     def get_main_object_sector(self, main_object):
         cx = (main_object.bbox[2] - main_object.bbox[0])/2 + main_object.bbox[0]
@@ -112,13 +119,24 @@ class CameraApp:
         self.status['cx'] = cx
         return obj_sector
 
+    def get_panic_score(self, main_obj_area):
+        main_obj_area = main_obj_area / FRAME_AREA
+        self.bbox_area_queue.append(main_obj_area)
+        panic_score = np.std(self.bbox_area_queue)
+        if panic_score > config.PANIC_THRESHOLD:
+            self.status['riskPanic'] = 75
+        else:
+            self.status['riskPanic'] = 30
+        return panic_score
+
     def write_label(self, frame):
         if self.status.get('subject', None) and self.status.get('cx', '') and self.status.get('riskPosition', ''):
             xmin_label = 'xmin: {}'.format(self.status.get('subject').get('xmin'))
             xmax_label = 'xmax: {}'.format(self.status.get('subject').get('xmax'))
             cx_label = 'cx: {}'.format(self.status.get('cx', ''))
             sector_label = 'sector: {}'.format(self.status.get('riskPosition', ''))
-            panic_label = 'panic level: {}'.format(self.status.get('riskPanic', ''))
+            panic_score_label = 'panic score: {}'.format(self.status.get('riskPanic', ''))
+            timer_label = 'time under water: {}'.format(self.status.get('faceWaterSeconds', ''))
             cv2.putText(frame, xmin_label, (20, 20), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255, 255, 255),
                         lineType=cv2.LINE_AA)
             cv2.putText(frame, xmax_label, (20, 35), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255, 255, 255),
@@ -127,7 +145,9 @@ class CameraApp:
                         lineType=cv2.LINE_AA)
             cv2.putText(frame, sector_label, (20, 65), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255, 255, 255),
                         lineType=cv2.LINE_AA)
-            cv2.putText(frame, panic_label, (20, 80), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255, 255, 255),
+            cv2.putText(frame, panic_score_label, (20, 80), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255, 255, 255),
+                        lineType=cv2.LINE_AA)
+            cv2.putText(frame, timer_label, (20, 95), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255, 255, 255),
                         lineType=cv2.LINE_AA)
 
     def write_status_to_file(self):
@@ -160,5 +180,7 @@ def start():
     video_stream = OpenCVStream(config.CAMERA_ID)
     detector = Detector(model_path=config.TRACKER_MODEL_PATH, id2name=config.ID_TO_NAME, threshold=0.5)
     movement_classifier = MovementClassifier(model_path=config.MOVEMENT_CLASSIFIER_MODEL_PATH, threshold=0.5)
-    app = CameraApp(video_stream=video_stream, object_estimator=detector, movement_classifier=movement_classifier)
+    face_detector = FaceDetector()
+    app = CameraApp(video_stream=video_stream, object_estimator=detector, movement_classifier=movement_classifier,
+                    face_detector=face_detector)
     app.run()

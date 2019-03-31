@@ -16,9 +16,9 @@ globvar = 0
 @app.route("/")
 def get():
     positionRandom = randint(0, 100)
-    submergedRandom = randint(0, 100)
+    submergedRandom = randint(0, 300)
     panicRandom = randint(0, 100)
-    return jsonify({ 'riskPosition': positionRandom, 'submergedFaceSeconds': submergedRandom, 'riskPanic': panicRandom })
+    return jsonify({ 'riskPosition': positionRandom, 'faceWaterSeconds': submergedRandom, 'riskPanic': panicRandom })
 
 # class Employees(Resource):
 #     def get(self):

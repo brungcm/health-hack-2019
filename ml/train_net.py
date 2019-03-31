@@ -12,8 +12,8 @@ from aquaman_net import AquamanNet
 
 from utils import IMAGE_SIZE
 
-EPOCHS = 10
-BATCH_SIZE = 2
+EPOCHS = 1000
+BATCH_SIZE = 4
 
 
 def preproc(image_bytes):
@@ -139,9 +139,9 @@ def model_fn(n_frames):
             eval_metric_ops = metrics(logits, labels['target'])
 
         else:
-            pass
-            # export_outputs = {
-            #     'logits': tf.estimator.export.PredictOutput(outputs=logits)}
+            # pass
+            export_outputs = {
+                'logits': tf.estimator.export.PredictOutput(outputs=logits)}
 
         return tf.estimator.EstimatorSpec(
             mode=mode,
@@ -204,7 +204,7 @@ if __name__ == '__main__':
         batch_size=BATCH_SIZE, tf_records_list=tfrecord_list_test, epochs=1, n_frames=args.window_size)
 
     train_spec = tf.estimator.TrainSpec(
-        input_fn=train_input_fn, max_steps=100)
+        input_fn=train_input_fn, max_steps=10000)
 
     # eval_steps = math.ceil(EVAL_SET_SIZE / FLAGS.batch_size)
 

@@ -1,11 +1,25 @@
 <div style="text-align:center">
-  <h1>
-    School of AI - Health Hackathon 2019
-  </h1>
+    <h1>
+        School of AI - Health Hackathon 2019
+    </h1>
 </div>
 
+<div class="total-risk-container" [ngClass]="{ 'low': totalRisk <= 30, 'medium': totalRisk > 30 && totalRisk <= 70, 'high': totalRisk > 70 }">
+    <div class="content">
+        <p class="label">Total risk</p>
+        <p class="value">{{ totalRisk }}%</p>
+    </div>
+</div>
 
-<div>
-  <button (click)="findAll()">All</button>
-  <span>All data: {{allData | json}}</span>
+<div class="charts-container">
+    <ngx-gauge *ngFor="let data of chartDatas;"
+        [type]="data.gaugeType"
+        [value]="data.gaugeValue"
+        [label]="data.gaugeLabel"
+        [append]="data.gaugeAppendText"
+        [thresholds]="thresholdConfig"
+        [size]=150
+        [thick]=12
+        [duration]=500 >
+    </ngx-gauge>
 </div>

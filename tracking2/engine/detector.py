@@ -67,9 +67,9 @@ class Detector(base_object_estimator.BaseObjectEstimator):
 
         height, width = frame.shape[:2]
 
-        print("predicting")
+        # print("predicting")
         predict = self.model({'inputs': [frame]})
-        print("predicted")
+        # print("predicted")
         _objects = self._parse_prediction(predict)
         _objects = self._scale_bbox(_objects, height, width)
 

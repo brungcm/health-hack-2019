@@ -5,7 +5,7 @@ import { switchMap } from 'rxjs/operators';
 
 interface IRiskData {
     riskPosition: number;
-    submergedFaceSeconds: number;
+    faceWaterSeconds: number;
     riskPanic: number;
 }
 
@@ -46,6 +46,12 @@ export class AppComponent {
         high: 'High'
     };
 
+    weight = {
+        position: 1,
+        submerged: 4.5,
+        panic: 2
+    };
+
     totalRiskVal = 0;
     totalRiskTxt = '';
 
@@ -57,14 +63,14 @@ export class AppComponent {
     }
 
     private requestForever() {
-        const result = interval(10000).pipe(
+        const result = interval(5000).pipe(
             switchMap(() => this.httpClient.get(this.baseUrl))
         );
 
         result.subscribe(
             (data: IRiskData) => {
                 this.chartDatas[0].gaugeValue = data.riskPosition;
-                this.chartDatas[1].gaugeValue = data.submergedFaceSeconds;
+                this.chartDatas[1].gaugeValue = this.calcFaceWaterPercent(data.faceWaterSeconds);
                 this.chartDatas[2].gaugeValue = data.riskPanic;
 
                 this.totalRiskVal = this.calcRisk(data);
@@ -76,18 +82,17 @@ export class AppComponent {
         );
     }
 
-    private calcRisk(data: IRiskData): number {
-        const weight = {
-            position: 1,
-            submerged: 4.5,
-            panic: 2
-        };
+    private calcFaceWaterPercent(faceWaterSeconds: number): number {
+        const value = (faceWaterSeconds / 30) * 100;
+        return value > 100 ? 100 : Math.floor(value);
+    }
 
-        const weightTotal = (weight.position + weight.submerged + weight.panic);
-        const result = ((data.riskPosition * weight.position) + (data.submergedFaceSeconds * weight.submerged) + (data.riskPanic * weight.panic))/weightTotal;
+    private calcRisk(data: IRiskData): number {
+        const submergedValue = this.calcFaceWaterPercent(data.faceWaterSeconds);
+        const weightTotal = (this.weight.position + this.weight.submerged + this.weight.panic);
+        const result = ((data.riskPosition * this.weight.position) + (submergedValue * this.weight.submerged) + (data.riskPanic * this.weight.panic))/weightTotal;
 
         return Math.floor(result);
-
     }
 
     private getRiskTxt(result: number): string {

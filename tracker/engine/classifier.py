@@ -45,5 +45,5 @@ class MovementClassifier(object):
             img.save(img_byte_array, format='JPEG')
             frames[key] = [img_byte_array.getvalue()]
         predict = self.model(frames)
-        panic_score = softmax(predict.get('output'))[1] * 100
+        panic_score = softmax(predict.get('output'))[0][1] * 100
         return panic_score

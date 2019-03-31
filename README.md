@@ -1,6 +1,41 @@
 # health-hack-2019
 Hackathon 2019
 
+Drowning is the leading cause of death among children aged 1 to 4 years in Brazil.
+
+Some statistics:
+- 10 people die from drowning in the US every day.
+- 17 people die from drowning in Brazil every day.
+- More than 360.00 deaths are caused by drowning worldwide.
+
+We strongly believe that prevention is better than cure.
+That said, we developed a machine learning solution to prevent and warn of possible drowning in real time using cameras inside and outside pools.
+
+With 3 custom models, you can identify:
+- risk position (deep)
+- identify and count the time a face is underwater
+- identify panic
+
+Using all of the models together, we can create an assertive risk alert.
+
+Solution viability:
+
+Brazil
+- 1.500.000 swimming pools (2º ranking place)
+- 60.000 per year
+
+EUA
+- 9.000.000 swimming pools (1º ranking place)
+- 170.000 per year
+
+Estimative solution cost:
+- Equipment: $ 600
+- Installation: $ 200
+- Services: $ 300
+
+The application is technical and financial viable and can contribute in the prevention of accidents and save lives.
+
+https://drive.google.com/drive/folders/1hdRBJ6AqmI_xImORScjT0pIswnNFOCYK?usp=sharing
 
 
 ## Install nvidia-docker

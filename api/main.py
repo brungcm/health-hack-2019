@@ -19,7 +19,6 @@ def default():
 
 @app.route('/status')
 def get_status():
-    status_data = {}
     filepath = os.environ['STATUS_FILE']
     with open(filepath, 'r') as status_file:
         status_data = json.load(status_file)

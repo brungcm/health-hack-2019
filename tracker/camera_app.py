@@ -11,39 +11,42 @@ from engine.classifier import MovementClassifier
 from engine.detector import Detector
 from engine.face_detector import FaceDetector
 from stream.opencv_stream import OpenCVStream
+import collections
 
 logging.basicConfig()
 logger = logging.getLogger('People-Tracker-App')
 logger.setLevel(logging.INFO)
 
 FRAME_SIZE = (600, 800, 3)
+FRAME_AREA = FRAME_SIZE[0] * FRAME_SIZE[1]
 RESIZE_RATE = 3
 
 POOL_MASK = np.zeros(FRAME_SIZE)
-POOL_BORDER_W = int(FRAME_SIZE[1]*0.3)
-POOL_SECTOR_W = int(FRAME_SIZE[1]*0.1)
+POOL_BORDER_W = int(FRAME_SIZE[1] * 0.3)
+POOL_SECTOR_W = int(FRAME_SIZE[1] * 0.1)
 POOL_MASK[:, :POOL_BORDER_W, 0] = 125  # BLUE
 POOL_MASK[:, :POOL_BORDER_W, 1] = 242  # GREEN
 POOL_MASK[:, :POOL_BORDER_W, 2] = 145  # RED
 
-POOL_MASK[:, POOL_BORDER_W:2*POOL_BORDER_W, 0] = 96   # BLUE
-POOL_MASK[:, POOL_BORDER_W:2*POOL_BORDER_W, 1] = 247  # GREEN
-POOL_MASK[:, POOL_BORDER_W:2*POOL_BORDER_W, 2] = 242  # RED
+POOL_MASK[:, POOL_BORDER_W:2 * POOL_BORDER_W, 0] = 96   # BLUE
+POOL_MASK[:, POOL_BORDER_W:2 * POOL_BORDER_W, 1] = 247  # GREEN
+POOL_MASK[:, POOL_BORDER_W:2 * POOL_BORDER_W, 2] = 242  # RED
 
-POOL_MASK[:, 2*POOL_BORDER_W:, 0] = 96   # BLUE
-POOL_MASK[:, 2*POOL_BORDER_W:, 1] = 109  # GREEN
-POOL_MASK[:, 2*POOL_BORDER_W:, 2] = 247  # RED
+POOL_MASK[:, 2 * POOL_BORDER_W:, 0] = 96   # BLUE
+POOL_MASK[:, 2 * POOL_BORDER_W:, 1] = 109  # GREEN
+POOL_MASK[:, 2 * POOL_BORDER_W:, 2] = 247  # RED
 
 
 class CameraApp:
     """ App
     """
 
-    def __init__(self, video_stream, object_estimator,face_detector):
+    def __init__(self, video_stream, object_estimator, movement_classifier, face_detector):
         self.video_stream = video_stream
-        self.object_estimator=object_estimator
+        self.object_estimator = object_estimator
         self.face_detector = face_detector
         self.status = {}
+        self.bbox_area_queue = collections.deque(maxlen=10)
 
     def run(self):
         """ Run App
@@ -60,18 +63,22 @@ class CameraApp:
             if frame is None:
                 break
             if not frame_buffer:
-                frame_buffer = deque([frame] * config.FRAME_BUFFER_SIZE, maxlen=config.FRAME_BUFFER_SIZE)
+                frame_buffer = deque(
+                    [frame] * config.FRAME_BUFFER_SIZE, maxlen=config.FRAME_BUFFER_SIZE)
             frame = cv2.flip(frame, 1)
-            frame = cv2.resize(frame, (FRAME_SIZE[1], FRAME_SIZE[0]))            
+            frame = cv2.resize(frame, (FRAME_SIZE[1], FRAME_SIZE[0]))
             frame_buffer.append(frame)
             self.object_estimator.process(frame)
-            panic_score = self.movement_classifier.process(frame_buffer)
-            self.update_status(panic_score)
-            frame = self._draw_bbox(frame, [obj.bbox for obj in self.object_estimator.objects])
+            # panic_score = self.movement_classifier.process(frame_buffer)
+            # self.update_status(panic_score)
+            # self.update_status(2)
+            self.update_status()
+            frame = self._draw_bbox(
+                frame, [obj.bbox for obj in self.object_estimator.objects])
 
             # detect face
             frame, secs = self.face_detector.process(frame)
-            print(secs)
+            # print(secs)
 
             self.write_label(frame)
             if config.DISPLAY:
@@ -82,8 +89,16 @@ class CameraApp:
                     break
         cv2.destroyAllWindows()
 
-    def update_status(self, panic_score):
-        main_obj, cnt = self.get_main_bbox()
+    # def update_status(self, panic_score):
+    def update_status(self):
+        main_obj, cnt, main_obj_area = self.get_main_bbox()
+        main_obj_area = main_obj_area / FRAME_AREA
+
+        self.bbox_area_queue.append(main_obj_area)
+
+        panic_score = np.std(self.bbox_area_queue)
+        print(panic_score)
+
         if main_obj:
             self.status['riskPanic'] = panic_score
             self.get_main_object_sector(main_obj)
@@ -97,7 +112,8 @@ class CameraApp:
         for obj in self.object_estimator.objects:
             if obj.bbox:
                 xmin, ymin, xmax, ymax = obj.bbox[0], obj.bbox[1], obj.bbox[2], obj.bbox[3]
-                contour = np.array([[[xmin, ymin]], [[xmax, ymin]], [[xmax, ymax]], [[xmin, ymax]]])
+                contour = np.array([[[xmin, ymin]], [[xmax, ymin]], [
+                                   [xmax, ymax]], [[xmin, ymax]]])
                 area = cv2.contourArea(contour)
                 if area > cur_area:
                     main_object = obj
@@ -110,19 +126,22 @@ class CameraApp:
                 'ymin': main_object.bbox[1],
                 'ymax': main_object.bbox[3]
             }
-        return main_object, contour
+        return main_object, contour, cur_area
 
     def get_main_object_sector(self, main_object):
-        cx = (main_object.bbox[2] - main_object.bbox[0])/2 + main_object.bbox[0]
-        obj_sector = int(cx/POOL_SECTOR_W) * 10
+        cx = (main_object.bbox[2] - main_object.bbox[0]
+              ) / 2 + main_object.bbox[0]
+        obj_sector = int(cx / POOL_SECTOR_W) * 10
         self.status['riskPosition'] = obj_sector
         self.status['cx'] = cx
         return obj_sector
 
     def write_label(self, frame):
         if self.status.get('subject', None) and self.status.get('cx', '') and self.status.get('sector', ''):
-            xmin_label = 'xmin: {}'.format(self.status.get('subject').get('xmin'))
-            xmax_label = 'xmax: {}'.format(self.status.get('subject').get('xmax'))
+            xmin_label = 'xmin: {}'.format(
+                self.status.get('subject').get('xmin'))
+            xmax_label = 'xmax: {}'.format(
+                self.status.get('subject').get('xmax'))
             cx_label = 'cx: {}'.format(self.status.get('cx', ''))
             sector_label = 'sector: {}'.format(self.status.get('sector', ''))
             cv2.putText(frame, xmin_label, (20, 20), cv2.FONT_HERSHEY_DUPLEX, 0.5, (255, 255, 255),
@@ -156,13 +175,18 @@ class CameraApp:
         for bbox in bboxes:
             pt1 = (bbox[0], bbox[1])
             pt2 = (bbox[2], bbox[3])
-            rect_frame = cv2.rectangle(rect_frame, pt1, pt2, (34, 34, 178), thickness=2)
+            rect_frame = cv2.rectangle(
+                rect_frame, pt1, pt2, (34, 34, 178), thickness=2)
         return rect_frame
 
 
 def start():
     video_stream = OpenCVStream(config.CAMERA_ID)
-    detector = Detector(model_path=config.TRACKER_MODEL_PATH, id2name=config.ID_TO_NAME, threshold=0.5)
-    movement_classifier = MovementClassifier(model_path=config.MOVEMENT_CLASSIFIER_MODEL_PATH, threshold=0.5)
-    app = CameraApp(video_stream=video_stream, object_estimator=detector, movement_classifier=movement_classifier)
+    detector = Detector(model_path=config.TRACKER_MODEL_PATH,
+                        id2name=config.ID_TO_NAME, threshold=0.5)
+    movement_classifier = MovementClassifier(
+        model_path=config.MOVEMENT_CLASSIFIER_MODEL_PATH, threshold=0.5)
+    face_detector = FaceDetector()
+    app = CameraApp(video_stream=video_stream, object_estimator=detector,
+                    movement_classifier=movement_classifier, face_detector=face_detector)
     app.run()

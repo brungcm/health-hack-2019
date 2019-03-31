@@ -42,7 +42,7 @@ Run image
 docker run --runtime=nvidia -it --rm tensorflow/tensorflow:latest-gpu
 ```
 
-Run image
+### Running Tracker App
 ```bash
 xhost +local:docker
 

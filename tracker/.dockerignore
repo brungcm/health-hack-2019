@@ -1,0 +1,6 @@
+*.pyc
+.dockerignore
+Dockerfile
+README.md
+venv/
+.idea/

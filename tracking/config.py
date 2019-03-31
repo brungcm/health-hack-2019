@@ -1,9 +1,0 @@
-# CAMERA_ID = 0
-CAMERA_ID = 'video_sample1.mp4'
-DETECTION_RATE = 3
-DISPLAY = 1
-ID_TO_NAME = {1: 'person'}
-MODEL_PATH = 'model/saved_model'
-OBJECT_LIFECYCLE = 3
-TRACKER_NAME = 'kcf'
-WINDOW_SIZE_SECS = 60

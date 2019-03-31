@@ -2,7 +2,6 @@ import os
 
 
 CAMERA_ID = os.getenv('CAMERA_ID', 0)
-# CAMERA_ID = os.getenv('CAMERA_ID', '/dataset/hacka_videos/IMG_9033.MOV')
 DETECTION_RATE = os.getenv('DETECTION_RATE', 3)
 DISPLAY = os.getenv('DISPLAY', 1)
 ID_TO_NAME = {1: 'person'}
@@ -12,3 +11,4 @@ OBJECT_LIFECYCLE = os.getenv('OBJECT_LIFECYCLE', 3)
 TRACKER_NAME = os.getenv('TRACKER_NAME', 'kcf')
 WINDOW_SIZE_SECS = os.getenv('WINDOW_SIZE_SECS', 60)
 FRAME_BUFFER_SIZE = os.getenv('FRAME_BUFFER_SIZE', 16)
+STATUS_FILE = os.getenv('STATUS_FILE', '/data/status.json')

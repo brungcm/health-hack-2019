@@ -3,6 +3,12 @@ import { HttpClient } from '@angular/common/http';
 import { interval } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 
+interface IRiskData {
+    riskPosition: number;
+    submergedFaceSeconds: number;
+    riskPanic: number;
+}
+
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
@@ -10,7 +16,6 @@ import { switchMap } from 'rxjs/operators';
 })
 export class AppComponent {
     baseUrl = 'http://localhost:5002/';
-    totalRisk = 0;
     chartDatas: any[] = [
         {
             gaugeType: 'semi',
@@ -35,6 +40,15 @@ export class AppComponent {
         70: { color: '#ed0215' }
     };
 
+    riskLevel = {
+        low: 'Low',
+        medium: 'Medium',
+        high: 'High'
+    };
+
+    totalRiskVal = 0;
+    totalRiskTxt = '';
+
     constructor(private httpClient: HttpClient) {
     }
 
@@ -43,22 +57,49 @@ export class AppComponent {
     }
 
     private requestForever() {
-        const result = interval(3000).pipe(
+        const result = interval(10000).pipe(
             switchMap(() => this.httpClient.get(this.baseUrl))
         );
 
         result.subscribe(
-            (data: any) => {
+            (data: IRiskData) => {
                 this.chartDatas[0].gaugeValue = data.riskPosition;
                 this.chartDatas[1].gaugeValue = data.submergedFaceSeconds;
                 this.chartDatas[2].gaugeValue = data.riskPanic;
 
-                this.totalRisk = Math.floor((data.riskPosition + data.submergedFaceSeconds + data.riskPanic) / 3);
+                this.totalRiskVal = this.calcRisk(data);
+                this.totalRiskTxt = this.getRiskTxt(this.totalRiskVal);
             },
             (error: Error) => {
                 console.error(error);
             }
         );
+    }
+
+    private calcRisk(data: IRiskData): number {
+        const weight = {
+            position: 1,
+            submerged: 4.5,
+            panic: 2
+        };
+
+        const weightTotal = (weight.position + weight.submerged + weight.panic);
+        const result = ((data.riskPosition * weight.position) + (data.submergedFaceSeconds * weight.submerged) + (data.riskPanic * weight.panic))/weightTotal;
+
+        return Math.floor(result);
+
+    }
+
+    private getRiskTxt(result: number): string {
+        if (result <= 33) {
+            return this.riskLevel.low;
+        }
+
+        if (result > 33 && result < 66) {
+            return this.riskLevel.medium;
+        }
+
+        return this.riskLevel.high;
     }
 
 }

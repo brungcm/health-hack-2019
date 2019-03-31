@@ -150,6 +150,6 @@ class CameraApp:
 
 def start():
     video_stream = OpenCVStream(config.CAMERA_ID)
-    detector = Detector(model_path=config.MODEL_PATH, id2name=config.ID_TO_NAME, threshold=0.5)
+    detector = Detector(model_path=config.TRACKER_MODEL_PATH, id2name=config.ID_TO_NAME, threshold=0.5)
     app = CameraApp(video_stream=video_stream, object_estimator=detector)
     app.run()

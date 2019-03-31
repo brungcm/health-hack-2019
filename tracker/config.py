@@ -13,5 +13,5 @@ WINDOW_SIZE_SECS = os.getenv('WINDOW_SIZE_SECS', 60)
 FRAME_BUFFER_SIZE = os.getenv('FRAME_BUFFER_SIZE', 16)
 STATUS_FILE = os.getenv('STATUS_FILE', '/data/status.json')
 CASCADE_CLASSIFIER_PATH = os.getenv('CASCADE_CLASSIFIER_PATH', 'model/haarcascade_frontalface_default.xml')
-PANIC_THRESHOLD = os.getenv('PANIC_THRESHOLD', 0.05)
+PANIC_THRESHOLD = os.getenv('PANIC_THRESHOLD', 0.04)
 

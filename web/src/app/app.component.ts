@@ -63,7 +63,7 @@ export class AppComponent {
     }
 
     private requestForever() {
-        const result = interval(5000).pipe(
+        const result = interval(1000).pipe(
             switchMap(() => this.httpClient.get(this.baseUrl))
         );
 

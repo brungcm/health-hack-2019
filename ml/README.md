@@ -1,6 +1,15 @@
 # Machine Learning models
 Here it is the code responsible for training the machine learning model for drowning classification
 
+## Extract video frames
+
+```bash
+python -m ml.extract_frames \
+--config-file ./ml/config/tracker_config.json \
+--video-path /dataset/hacka_videos/IMG_9016.MOV \
+--output-dir /dataset/frames/train/normal/IMG_9016
+```
+
 ## Generate TF-records
 
 ```bash

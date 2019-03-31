@@ -1,7 +1,8 @@
 import os
 
 
-CAMERA_ID = os.getenv('CAMERA_ID', 1)
+CAMERA_ID = os.getenv('CAMERA_ID', 0)
+# CAMERA_ID = os.getenv('CAMERA_ID', '/dataset/hacka_videos/IMG_9033.MOV')
 DETECTION_RATE = os.getenv('DETECTION_RATE', 3)
 DISPLAY = os.getenv('DISPLAY', 1)
 ID_TO_NAME = {1: 'person'}

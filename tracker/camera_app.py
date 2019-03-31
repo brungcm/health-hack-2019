@@ -8,13 +8,16 @@ import time
 
 from collections import deque
 from engine.detector import Detector
+from engine.face_detector import FaceDetector
 from stream.opencv_stream import OpenCVStream
 
 logging.basicConfig()
 logger = logging.getLogger('People-Tracker-App')
 logger.setLevel(logging.INFO)
 
+# FRAME_SIZE = (600, 800, 3)
 FRAME_SIZE = (480, 640, 3)
+# FRAME_SIZE = (360, 480, 3)
 RESIZE_RATE = 3
 
 POOL_MASK = np.zeros(FRAME_SIZE)
@@ -37,9 +40,10 @@ class CameraApp:
     """ App
     """
 
-    def __init__(self, video_stream, object_estimator):
+    def __init__(self, video_stream, object_estimator,face_detector):
         self.video_stream = video_stream
         self.object_estimator=object_estimator
+        self.face_detector = face_detector
         self.status = {}
 
     def run(self):
@@ -57,11 +61,16 @@ class CameraApp:
             if frame is None:
                 break
             frame = cv2.flip(frame, 1)
-            frame = cv2.resize(frame, (FRAME_SIZE[1], FRAME_SIZE[0]))
+            frame = cv2.resize(frame, (FRAME_SIZE[1], FRAME_SIZE[0]))            
             frame_buffer.append(frame)
             self.object_estimator.process(frame)
             self.update_status()
             frame = self._draw_bbox(frame, [obj.bbox for obj in self.object_estimator.objects])
+
+            # detect face
+            frame, secs = self.face_detector.process(frame)
+            print(secs)
+
             self.write_label(frame)
             if config.DISPLAY:
                 frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
@@ -151,5 +160,6 @@ class CameraApp:
 def start():
     video_stream = OpenCVStream(config.CAMERA_ID)
     detector = Detector(model_path=config.TRACKER_MODEL_PATH, id2name=config.ID_TO_NAME, threshold=0.5)
-    app = CameraApp(video_stream=video_stream, object_estimator=detector)
+    face_detector = FaceDetector()
+    app = CameraApp(video_stream=video_stream, object_estimator=detector,face_detector=face_detector)
     app.run()
